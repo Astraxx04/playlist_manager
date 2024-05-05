@@ -328,6 +328,11 @@ class PlaylistMoveDeleteSongView(APIView):
         if new_position is None:
             return Response("Position is required", status=status.HTTP_400_BAD_REQUEST)
 
+        song_count = PlaylistSong.objects.filter(playlist_id=playlist_id).count()
+
+        if new_position < 1 or new_position > song_count:
+            return Response("Position is invalid", status=status.HTTP_400_BAD_REQUEST)
+
         old_position = playlist_song.position
 
         songs_to_adjust = PlaylistSong.objects.filter(playlist_id=playlist_id, position__gte=min(old_position, new_position), position__lte=max(old_position, new_position)).exclude(id=playlist_song.id)
