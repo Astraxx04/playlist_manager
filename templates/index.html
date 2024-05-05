@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playlist Manager</title>
+    <style>
+        body {
+            margin-top: 5%;
+            font-size: large;
+        }
+        h1 {
+            text-align: center;
+        }
+        .content {
+            margin-top: 2%;
+            margin-left: 10%;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Welcome to Playlist Manager</h1>
+    <div class="content">
+        <h2>Introduction</h2>
+        <p>
+            <strong>Name: </strong>Gagan S <br />
+            <strong>USN: </strong>1DS20IS035 <br />
+            <strong>Branch: </strong>Information Science and Engineering <br />
+            <strong>College: </strong>Dayananda Sagar College of Engineering <br />
+            <strong>My Portfolio: </strong><a href="https://www.gagans.me">Gagan Portfolio Link</a> <br />
+            <strong>Role: </strong>Backend Engineer Intern
+        </p>
+
+        <h2>Project Details</h2>
+        <ol>
+            <li><strong>Create new song:</strong> This endpoint is used to add a new song entry in the songs table.</li>
+            <li><strong>List available songs:</strong> This endpoint is used to list all the available songs in the app.</li>
+            <li><strong>Create new playlist:</strong> This endpoint is used to add a new playlist entry in the playlists table.</li>
+            <li><strong>List available playlists:</strong> This endpoint is used to list all the available playlists in the app.</li>
+            <li><strong>Edit playlist metadata:</strong> This endpoint is used to change the name of an existing playlist.</li>
+            <li><strong>Delete playlist:</strong> This endpoint is used to delete an existing playlist.</li>
+            <li><strong>List playlist songs:</strong> This endpoint is used to list all the songs associated with a playlist.</li>
+            <li><strong>Move playlist song:</strong> This endpoint is used to move a song up and down in a playlist i.e., reposition it.</li>
+            <li><strong>Remove playlist song:</strong> This endpoint is used to remove a song from a playlist.</li>
+        </ol>
+
+        <h2>Swagger Documentation</h2>
+        <p>For detailed API documentation and Endpoints, please refer to <a href="{% url 'schema-swagger-ui' %}">Swagger Docs</a>.</p>
+    </div>
+</body>
+
+</html>

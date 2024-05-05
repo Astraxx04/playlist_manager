@@ -17,6 +17,11 @@ from django.contrib import admin
 from django.urls import path, include
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from django.shortcuts import render
+from django.http import request
+
+def index(request):
+    return render(request, 'index.html')
 
 schema_view = get_schema_view(
    openapi.Info(
@@ -29,6 +34,7 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', index, name='Index'),
     path('api/', include('music_api.urls')),
     path('api-docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]
