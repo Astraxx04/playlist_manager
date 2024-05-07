@@ -78,6 +78,10 @@ class SongView(APIView):
     def post(self, request):
         serializer = SongSerializer(data=request.data)
         if serializer.is_valid():
+            existing_songs = Song.objects.filter(name=request.data.get('name'), artist=request.data.get('artist'))
+            if existing_songs.exists():
+                return Response("A song with the same name and artist already exists.", status=status.HTTP_400_BAD_REQUEST)
+            
             serializer.save()
             return Response("Success. The song entry has been created.", status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -151,15 +155,32 @@ class PlaylistView(APIView):
     def post(self, request):
         serializer = PlaylistSerializer(data=request.data)
         if serializer.is_valid():
+            existing_playlist = Playlist.objects.filter(name=request.data.get('name'))
+            if existing_playlist.exists():
+                return Response("A playlist with the same name already exists.", status=status.HTTP_400_BAD_REQUEST)
+            
+            songs = request.data.get('songs', [])
+            if not songs:
+                return Response("Include at least one song in the playlist.", status=status.HTTP_400_BAD_REQUEST)
+
             playlist = serializer.save()
 
-            songs = request.data.get('songs', [])
+            unique_song_ids = set()
             for position, song_id in enumerate(songs, start=1):
-                song = Song.objects.get(pk=song_id)
+                if song_id in unique_song_ids:
+                    continue
+
+                try:
+                    song = Song.objects.get(pk=song_id)
+                except Song.DoesNotExist:
+                    playlist.delete()
+                    return Response(f"Song with ID {song_id} does not exist.", status=status.HTTP_400_BAD_REQUEST)
+                
                 playlist_song_data = {'playlist': playlist.pk, 'song': song.pk, 'position': position}
                 playlist_song_serializer = PlaylistSongSerializer(data=playlist_song_data)
                 if playlist_song_serializer.is_valid():
                     playlist_song_serializer.save()
+                    unique_song_ids.add(song_id)
                 else:
                     playlist.delete()
                     return Response(playlist_song_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -197,10 +218,14 @@ class PlaylistModifyDeleteView(APIView):
         try:
             playlist = Playlist.objects.get(pk=playlist_id)
         except Playlist.DoesNotExist:
-            return Response("Playlist not found", status=status.HTTP_404_NOT_FOUND)
+            return Response("Playlist does not exist.", status=status.HTTP_404_NOT_FOUND)
 
         serializer = PlaylistSerializer(playlist, data=request.data)
         if serializer.is_valid():
+            existing_playlist = Playlist.objects.filter(name=request.data.get('name'))
+            if existing_playlist.exists():
+                return Response("A playlist with the same name already exists. Enter a different name.", status=status.HTTP_400_BAD_REQUEST)
+            
             serializer.save()
             return Response("Success. The name of the playlist has been edited.", status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -227,10 +252,10 @@ class PlaylistModifyDeleteView(APIView):
         try:
             playlist = Playlist.objects.get(pk=playlist_id)
         except Playlist.DoesNotExist:
-            return Response("Playlist not found", status=status.HTTP_404_NOT_FOUND)
+            return Response("Playlist does not exist.", status=status.HTTP_404_NOT_FOUND)
 
         playlist.delete()
-        return Response("Success. The playlist has been deleted", status=status.HTTP_200_OK)
+        return Response("Success. The playlist has been deleted.", status=status.HTTP_200_OK)
 
 
 
@@ -321,17 +346,20 @@ class PlaylistMoveDeleteSongView(APIView):
         try:
             playlist_song = PlaylistSong.objects.get(playlist_id=playlist_id, song_id=song_id)
         except PlaylistSong.DoesNotExist:
-            return Response("Playlist song not found", status=status.HTTP_404_NOT_FOUND)
+            return Response("Playlist song not found.", status=status.HTTP_404_NOT_FOUND)
 
         new_position = request.data.get('position')
 
         if new_position is None:
-            return Response("Position is required", status=status.HTTP_400_BAD_REQUEST)
+            return Response("Position is required.", status=status.HTTP_400_BAD_REQUEST)
+
+        if not isinstance(new_position, int):
+            return Response("Position must be an integer.", status=status.HTTP_400_BAD_REQUEST)
 
         song_count = PlaylistSong.objects.filter(playlist_id=playlist_id).count()
 
         if new_position < 1 or new_position > song_count:
-            return Response("Position is invalid", status=status.HTTP_400_BAD_REQUEST)
+            return Response("Position is invalid.", status=status.HTTP_400_BAD_REQUEST)
 
         old_position = playlist_song.position
 

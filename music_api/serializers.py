@@ -5,11 +5,20 @@ from .models import Playlist
 from .models import PlaylistSong
 
 class SongSerializer(serializers.ModelSerializer):
-    def validate_release_year(self, value):
+    def validate_data(self, data):
+        name = data.get('name')
+        artist = data.get('artist')
+        release_year = data.get('release_year')
+
         current_year = timezone.now().year
-        if value < 1900 or value > current_year:
-            raise serializers.ValidationError("Invalid release year")
-        return value
+        if release_year < 1900 or release_year > current_year:
+            raise serializers.ValidationError("Invalid release year.")
+
+        existing_songs = Song.objects.filter(name=name, artist=artist)
+        if existing_songs.exists():
+            raise serializers.ValidationError("A song with the same name and artist already exists.")
+
+        return data
 
     class Meta:
         model = Song
@@ -24,21 +33,3 @@ class PlaylistSongSerializer(serializers.ModelSerializer):
     class Meta:
         model = PlaylistSong
         fields = ['playlist', 'song', 'position']
-
-    # def create(self, validated_data):
-    #     songs_data = validated_data.pop('songs', [])
-    #     playlist = Playlist.objects.create(**validated_data)
-    #     for song_data in songs_data:
-    #         song = Song.objects.get_or_create(**song_data)[0]
-    #         playlist.songs.add(song)
-    #     return playlist
-
-    # def update(self, instance, validated_data):
-    #     instance.name = validated_data.get('name', instance.name)
-    #     instance.save()
-    #     return instance
-
-    # def to_representation(self, instance):
-    #     representation = super().to_representation(instance)
-    #     representation['songs'] = SongSerializer(instance.songs.all(), many=True).data
-    #     return representation
